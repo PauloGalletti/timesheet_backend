@@ -33,11 +33,10 @@ class ProjectListCreateView(generics.ListCreateAPIView):
     serializer_class = ProjectSerializer
     permission_classes = [IsAuthenticated, IsAdminUser]
 
-# View para listar e criar Timesheets
-class TimesheetListCreate(generics.ListCreateAPIView):
+class TimesheetListCreateView(generics.ListCreateAPIView):
     queryset = Timesheet.objects.all()
     serializer_class = TimesheetSerializer
-    permission_classes = [IsAuthenticated]  # Apenas usuários autenticados podem acessar
+    permission_classes = [IsAuthenticated]
 
 # View para listar e criar usuários - apenas para administradores
 @api_view(['GET', 'POST'])

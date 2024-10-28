@@ -21,13 +21,32 @@ class Project(models.Model):
 
 class Timesheet(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    project = models.ForeignKey(Project, on_delete=models.CASCADE)
-    start_time = models.DateTimeField()
-    end_time = models.DateTimeField()
-    break_time = models.IntegerField(default=60)  # Em minutos
+    client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank=True)
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, null=True, blank=True)
+    atendimento_choices = (
+        ('Sustentação', 'Sustentação'),
+        ('Projetos', 'Projetos'),
+        ('Atividades Internas', 'Atividades Internas'),
+    )
+    atendimento = models.CharField(max_length=50, choices=atendimento_choices)
+    detalhes = models.TextField(blank=True, null=True)
+    obs = models.TextField(blank=True, null=True)
+    date = models.DateField()
+    entrada = models.TimeField()
+    intervalo = models.TimeField()
+    saida = models.TimeField()
+    total_horas = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True)
+
+    def save(self, *args, **kwargs):
+        entrada_datetime = datetime.datetime.combine(self.date, self.entrada)
+        saida_datetime = datetime.datetime.combine(self.date, self.saida)
+        intervalo_duration = datetime.timedelta(hours=self.intervalo.hour, minutes=self.intervalo.minute)
+        total_duration = (saida_datetime - entrada_datetime) - intervalo_duration
+        self.total_horas = total_duration.total_seconds() / 3600
+        super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.user.username} - {self.project.name} - {self.start_time}"
+        return f"{self.user.username} - {self.date}"
 
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
