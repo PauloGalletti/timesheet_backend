@@ -3,8 +3,8 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 from django.contrib.auth.models import User
-from .models import Project, Timesheet
-from .serializers import ProjectSerializer, TimesheetSerializer
+from .models import Project, Timesheet, Client
+from .serializers import ProjectSerializer, TimesheetSerializer, ClientSerializer
 
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.authtoken.models import Token
@@ -23,11 +23,15 @@ class CustomAuthToken(ObtainAuthToken):
             'is_staff': user.is_staff,  # Retorna se o usuário é admin
         })
     
-# View para listar e criar Projetos
-class ProjectListCreate(generics.ListCreateAPIView):
+class ClientListCreateView(generics.ListCreateAPIView):
+    queryset = Client.objects.all()
+    serializer_class = ClientSerializer
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+class ProjectListCreateView(generics.ListCreateAPIView):
     queryset = Project.objects.all()
     serializer_class = ProjectSerializer
-    permission_classes = [IsAuthenticated]  # Apenas usuários autenticados podem acessar
+    permission_classes = [IsAuthenticated, IsAdminUser]
 
 # View para listar e criar Timesheets
 class TimesheetListCreate(generics.ListCreateAPIView):
