@@ -4,7 +4,7 @@ from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 from django.contrib.auth.models import User
 from .models import Project, Timesheet, Client
-from .serializers import ProjectSerializer, TimesheetSerializer, ClientSerializer
+from .serializers import ProjectSerializer, TimesheetSerializer, ClientSerializer, UserRegistrationSerializer
 
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.authtoken.models import Token
@@ -38,33 +38,31 @@ class TimesheetListCreateView(generics.ListCreateAPIView):
     serializer_class = TimesheetSerializer
     permission_classes = [IsAuthenticated]
 
-# View para listar e criar usuários - apenas para administradores
+# View para listar e registrar novos usuários com informações adicionais
 @api_view(['GET', 'POST'])
 @permission_classes([IsAdminUser])
 def user_list_create(request):
     if request.method == 'GET':
         users = User.objects.all()
-        data = [{"username": user.username, "id": user.id, "is_staff": user.is_staff} for user in users]
+        data = [
+            {
+                "username": user.username,
+                "id": user.id,
+                "is_staff": user.is_staff,
+                "role": user.profile.role if hasattr(user, 'profile') else None,
+            } for user in users
+        ]
         return Response(data, status=status.HTTP_200_OK)
 
     elif request.method == 'POST':
-        username = request.data.get("username")
-        password = request.data.get("password")
-        is_staff = request.data.get("is_staff", False)  # Define se o usuário é admin ou não
+        serializer = UserRegistrationSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        if username and password:
-            if User.objects.filter(username=username).exists():
-                return Response({"error": "Username already exists."}, status=status.HTTP_400_BAD_REQUEST)
-            user = User.objects.create_user(username=username, password=password)
-            user.is_staff = is_staff  # Define se o usuário será staff
-            user.save()
-            return Response({"username": user.username, "is_staff": user.is_staff}, status=status.HTTP_201_CREATED)
-
-        return Response({"error": "Username and password are required."}, status=status.HTTP_400_BAD_REQUEST)
-
-# View para excluir um usuário - apenas para administradores
 @api_view(['DELETE'])
-@permission_classes([IsAdminUser])  # Apenas administradores podem acessar
+@permission_classes([IsAdminUser])
 def user_delete(request, username):
     try:
         user = User.objects.get(username=username)

@@ -50,7 +50,14 @@ class Timesheet(models.Model):
 
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    projects = models.ManyToManyField(Project)
+    role_choices = [
+        ('Estágio', 'Estágio'),
+        ('1', 'Nível 1'),
+        ('2', 'Nível 2'),
+        ('3', 'Nível 3'),
+    ]
+    role = models.CharField(max_length=10, choices=role_choices, default='Estágio')
+    is_admin = models.BooleanField(default=False)  # Se o usuário é admin
 
     def __str__(self):
         return self.user.username
